@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import generateOtp from "../utils/generateOtp.js";
-import sendEmail from "../utils/sendEmail.js";
+import { sendOtpEmail } from "../utils/sendEmail.js";
 
 const OTP_EXPIRY_MINUTES = 10;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
@@ -38,24 +38,6 @@ function setAuthCookie(res, token) {
     maxAge: sevenDays,
   });
 }
-
-async function sendOtpEmail(email, name, otp) {
-  await sendEmail({
-    to: email,
-    subject: "Verify your pebloNotes email",
-    text: `Hi ${name}, your pebloNotes verification code is ${otp}. It expires in ${OTP_EXPIRY_MINUTES} minutes.`,
-    html: `
-      <div style="font-family: Arial, sans-serif; color: #0f172a; line-height: 1.6;">
-        <h2>Welcome to pebloNotes, ${name}!</h2>
-        <p>Use this verification code to finish creating your account:</p>
-        <p style="font-size: 28px; font-weight: 700; letter-spacing: 6px;">${otp}</p>
-        <p>This code expires in ${OTP_EXPIRY_MINUTES} minutes.</p>
-      </div>
-    `,
-  });
-}
-
-
 
 async function signup(req, res, next) {
   try {
@@ -106,7 +88,14 @@ async function signup(req, res, next) {
     user.otpExpiresAt = otpExpiresAt;
     await user.save();
 
-    await sendOtpEmail(email, name, otp);
+    try {
+      await sendOtpEmail(email, otp);
+    } catch (error) {
+      console.error("OTP email failed:", error);
+      return res
+        .status(500)
+        .json({ message: "Could not send OTP email. Please try again." });
+    }
 
     return res.status(201).json({
       message: "Signup successful. Please verify the OTP sent to your email.",

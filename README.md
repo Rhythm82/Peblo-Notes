@@ -156,7 +156,7 @@ Use the provided `.env.example` files as templates.
 - MongoDB with Mongoose
 - JWT authentication
 - bcrypt password hashing
-- Nodemailer OTP emails
+- Brevo Transactional Email API OTP emails
 - Google Gemini API through `@google/genai`
 - cookie-parser
 - CORS
@@ -189,7 +189,6 @@ Use the provided `.env.example` files as templates.
 - `express`
 - `jsonwebtoken`
 - `mongoose`
-- `nodemailer`
 - `nodemon`
 
 ## Folder Structure
@@ -261,7 +260,7 @@ PebloNotes/
 
 ## Architecture
 
-PebloNotes uses a classic MERN architecture. The React frontend handles routing, protected screens, UI state, PDF export, and API calls. Axios sends authenticated requests to the Express backend. The backend validates requests, protects private routes, talks to MongoDB through Mongoose, sends OTP emails through Nodemailer, and calls Gemini for AI summaries.
+PebloNotes uses a classic MERN architecture. The React frontend handles routing, protected screens, UI state, PDF export, and API calls. Axios sends authenticated requests to the Express backend. The backend validates requests, protects private routes, talks to MongoDB through Mongoose, sends OTP emails through the Brevo Transactional Email API, and calls Gemini for AI summaries.
 
 ```mermaid
 flowchart TD
@@ -269,7 +268,7 @@ flowchart TD
     B --> C[Axios API Layer]
     C --> D[Express Backend]
     D --> E[MongoDB Atlas]
-    D --> F[Nodemailer OTP Email]
+    D --> F[Brevo OTP Email]
     D --> G[Gemini AI API]
     B --> H[PDF Export]
     B --> I[Public Shared Note Page]
@@ -290,7 +289,7 @@ flowchart TD
 1. User submits name, email, and password on `/signup`.
 2. Backend validates the email and password rules.
 3. Backend hashes the password with bcrypt.
-4. Backend creates a six-digit OTP, stores only the hashed OTP, and sends the OTP email using Nodemailer.
+4. Backend creates a six-digit OTP, stores only the hashed OTP, and sends the OTP email using Brevo over HTTPS.
 5. User submits email and OTP on `/verify-otp`.
 6. Backend compares the OTP with the stored hash and checks expiry.
 7. Backend marks the user as verified, clears OTP fields, signs a JWT, and sets an auth cookie.
@@ -398,11 +397,12 @@ NODE_ENV=development
 MONGO_URI=mongodb://127.0.0.1:27017/peblonotes
 JWT_SECRET=replace_with_a_long_random_secret
 JWT_EXPIRES_IN=7d
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_gmail_app_password
-CLIENT_URL=http://localhost:5173,http://127.0.0.1:5173
+CLIENT_URL=http://localhost:5173
 GEMINI_API_KEY=
 GEMINI_MODEL=gemini-2.5-flash
+BREVO_API_KEY=
+EMAIL_FROM_NAME=PebloNotes
+EMAIL_FROM_EMAIL=
 ```
 
 ### Frontend
@@ -420,8 +420,30 @@ VITE_API_URL=http://localhost:5000/api
 - Node.js
 - npm
 - MongoDB connection string, either local MongoDB or MongoDB Atlas
-- Gmail/app password or SMTP-compatible email credentials for OTP emails
+- Brevo API key and configured sender email for OTP emails
 - Gemini API key for AI summaries
+
+### Email OTP Setup
+
+PebloNotes sends signup OTP emails with the Brevo Transactional Email API over HTTPS. Brevo is used instead of SMTP because Render free web services can block outbound SMTP ports such as 25, 465, and 587.
+
+For local development, add these backend variables to `backend/.env`:
+
+```env
+BREVO_API_KEY=your_brevo_api_key
+EMAIL_FROM_NAME=PebloNotes
+EMAIL_FROM_EMAIL=your_brevo_sender_email
+```
+
+For the Render backend service, add:
+
+```env
+BREVO_API_KEY=your_brevo_api_key
+EMAIL_FROM_NAME=PebloNotes
+EMAIL_FROM_EMAIL=your_brevo_sender_email
+```
+
+`EMAIL_FROM_EMAIL` must be configured as a sender in Brevo. Do not commit real API keys.
 
 ### Install Backend
 
@@ -480,7 +502,7 @@ There are no automated test scripts currently configured. Use these checks for a
 1. Run the backend with `npm run dev` inside `backend`.
 2. Run the frontend with `npm run dev` inside `frontend`.
 3. Open `http://localhost:5173`.
-4. Sign up with a valid email and verify the OTP.
+4. Add `BREVO_API_KEY` and `EMAIL_FROM_EMAIL` to `backend/.env`, then sign up with a valid email and verify the OTP.
 5. Login and confirm protected routes work.
 6. Create a note with title, category, tags, formatted content, and an image.
 7. Search/filter notes from the notes workspace.

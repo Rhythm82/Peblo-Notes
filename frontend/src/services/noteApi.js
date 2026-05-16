@@ -1,5 +1,19 @@
 import api from './api'
 
+function getPublicShareUrl(shareId) {
+  return `${window.location.origin}/#/shared/${shareId}`
+}
+
+function withHashShareUrl(data) {
+  const shareId = data?.note?.shareId || data?.shareId
+  if (!shareId) return data
+
+  return {
+    ...data,
+    shareUrl: getPublicShareUrl(shareId),
+  }
+}
+
 export async function getNotes(params = {}) {
   const { data } = await api.get('/notes', { params })
   return data
@@ -37,7 +51,7 @@ export async function generateAiSummary(id) {
 
 export async function generateShareLink(id) {
   const { data } = await api.post(`/notes/${id}/share`)
-  return data
+  return withHashShareUrl(data)
 }
 
 export async function disableShareLink(id) {
@@ -47,7 +61,7 @@ export async function disableShareLink(id) {
 
 export async function getShareStatus(id) {
   const { data } = await api.get(`/notes/${id}/share/status`)
-  return data
+  return withHashShareUrl(data)
 }
 
 export async function deleteNote(id) {

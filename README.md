@@ -6,13 +6,12 @@ The project is built as a full-stack developer assignment with a React/Vite fron
 
 ## Live Demo
 
-- Frontend: `Add deployed frontend URL here`
-- Backend API: `Add deployed backend URL here`
-- Public shared note example: `Add shared note URL here`
+- Frontend: `https://peblonotes.onrender.com/`
+- Backend API: `https://peblo-notes-j9ze.onrender.com`
 
 ## GitHub Repository
 
-- Repository: `Add GitHub repository URL here`
+- Repository: `https://github.com/Rhythm82/Peblo-Notes.git`
 
 Use the provided `.env.example` files as templates.
 
